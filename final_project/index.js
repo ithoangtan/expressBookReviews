@@ -8,11 +8,16 @@ const app = express()
 
 app.use(express.json())
 
-app.use('/customer', session({ secret: 'fingerprint_customer', resave: true, saveUninitialized: true }))
+const SECRET_KEY = 'fingerprint_customer' // This should be an environment variable in real applications
+
+app.use('/customer', session({ secret: SECRET_KEY, resave: true, saveUninitialized: true }))
 
 app.use('/customer/auth/*', function auth(req, res, next) {
-  if (req.session.token) {
-    jwt.verify(req.session.token, 'fingerprint_customer', function (err, decoded) {
+  const authHeader = req.headers.authorization
+  const token = authHeader && authHeader.split(' ')[1] // Lấy token từ header Authorization
+
+  if (token) {
+    jwt.verify(token, SECRET_KEY, function (err, decoded) {
       if (err) {
         return res.status(401).json({ message: 'Unauthorized' })
       }
